@@ -23,26 +23,45 @@ def scalar_multiplication(vector_1, vector_2):
     return ans
 
 
-# _________returns angle between 2 points in spherical coordinates
+# __________returns angle between 2 points in spherical coordinates
 def angle_two_points(lon1, lat1, r1, lon2, lat2, r2):
     lat1_rad = lat1 * math.pi / 180
     lon1_rad = lon1 * math.pi / 180
     lat2_rad = lat2 * math.pi / 180
     lon2_rad = lon2 * math.pi / 180
-    decart_1 = np.array([r1 * math.cos(lat1_rad) * math.cos(lon1_rad), r1 * math.cos(lat1_rad) * math.sin(lon1_rad), r1 * math.sin(lat1_rad)])
-    decart_2 = np.array([r2 * math.cos(lat2_rad) * math.cos(lon2_rad), r2 * math.cos(lat2_rad) * math.sin(lon2_rad), r2 * math.sin(lat2_rad)])
-    angle = 180 / math.pi * math.acos(scalar_multiplication(decart_1, decart_2) / np.sqrt(scalar_multiplication(decart_1, decart_1) * scalar_multiplication(decart_2, decart_2)))
+    descartes_1 = np.array([r1 * math.cos(lat1_rad) * math.cos(lon1_rad), r1 * math.cos(lat1_rad) * math.sin(lon1_rad), r1 * math.sin(lat1_rad)])
+    descartes_2 = np.array([r2 * math.cos(lat2_rad) * math.cos(lon2_rad), r2 * math.cos(lat2_rad) * math.sin(lon2_rad), r2 * math.sin(lat2_rad)])
+    angle = 180 / math.pi * math.acos(scalar_multiplication(descartes_1, descartes_2) / np.sqrt(scalar_multiplication(descartes_1, descartes_1) * scalar_multiplication(descartes_2, descartes_2)))
     return angle
 
 
+# __________changes coordinates of a spherical vector vector to spherical coordinates with a center in vector new_center
+# __________primary coordinates: Earth coordinates
+# ----------vector = (lon, lat, r)
+def move_spherical_coordinate_center_to_point(vector, new_center):
+    descartes_vector = np.array([vector[2] * math.cos(vector[1]) * math.cos(vector[0]), vector[2] * math.cos(vector[1]) * math.sin(vector[0]), vector[2] * math.sin(vector[1])])
+    descartes_new_center = np.array([new_center[2] * math.cos(new_center[1]) * math.cos(new_center[0]), new_center[2] * math.cos(new_center[1]) * math.sin(new_center[0]), new_center[2] * math.sin(new_center[1])])
+    new_r = np.sqrt(np.square(descartes_vector[0] - descartes_new_center[0]) + np.square(descartes_vector[1] - descartes_new_center[1]) + np.square(descartes_vector[2] - descartes_new_center[2]))
+    new_r_projected_xy = np.sqrt(np.square(descartes_vector[0] - descartes_new_center[0]) + np.square(descartes_vector[1] - descartes_new_center[1]))
+    return np.arccos((descartes_vector[0] - descartes_new_center[0]) / new_r_projected_xy), np.arcsin((descartes_vector[2] - descartes_new_center[2]) / new_r), new_r
+
+
+def detector_cloud_angle(lon1, lat1, r1, lon2, lat2, r2):
+    detector_spherical_vector = np.array([lon1, lat1, r1])
+    cloud_spherical_vector = np.array([lon2, lat2, r2])
+    detector = move_spherical_coordinate_center_to_point(detector_spherical_vector, cloud_spherical_vector)
+    cloud = move_spherical_coordinate_center_to_point(cloud_spherical_vector + np.array([0, 0, 1.0]), cloud_spherical_vector)
+    return angle_two_points(detector[0], detector[1], detector[2], cloud[0], cloud[1], cloud[2])
+
+
 def distance_two_points(lon1, lat1, r1, lon2, lat2, r2):
-    lat1_rad = lat1*math.pi/180
-    lon1_rad = lon1*math.pi/180
-    lat2_rad = lat2*math.pi/180
-    lon2_rad = lon2*math.pi/180
-    delta_x = r1*math.cos(lat1_rad)*math.cos(lon1_rad) - r2*math.cos(lat2_rad)*math.cos(lon2_rad)
-    delta_y = r1*math.cos(lat1_rad)*math.sin(lon1_rad) - r2*math.cos(lat2_rad)*math.sin(lon2_rad)
-    delta_z = r1*math.sin(lat1_rad) - r2*math.sin(lat2_rad)
+    lat1_rad = lat1 * math.pi / 180
+    lon1_rad = lon1 * math.pi / 180
+    lat2_rad = lat2 * math.pi / 180
+    lon2_rad = lon2 * math.pi / 180
+    delta_x = r1 * math.cos(lat1_rad) * math.cos(lon1_rad) - r2 * math.cos(lat2_rad) * math.cos(lon2_rad)
+    delta_y = r1 * math.cos(lat1_rad) * math.sin(lon1_rad) - r2 * math.cos(lat2_rad) * math.sin(lon2_rad)
+    delta_z = r1 * math.sin(lat1_rad) - r2 * math.sin(lat2_rad)
     distance = math.sqrt(pow(delta_x, 2) + pow(delta_y, 2) + pow(delta_z, 2))
     return distance  # result in kilometers
 
