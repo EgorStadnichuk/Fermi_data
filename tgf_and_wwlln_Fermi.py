@@ -112,18 +112,20 @@ def create_datetime_array_for_Fermi(data):
 
 
 def main():
+    data = pandas.read_csv('gbm_tgf_catalog_wwlln.csv', index_col=False, header=None)
 
-    lon1 = 0.0
-    lat1 = 0.0
-    r1 = 6500.0
+    r_detector = 6378.1 + 565.0  # km
+    r_cloud = 6378.1 + 10.0  # km
 
-    lon2 = 0.0
-    lat2 = 1.0
-    r2 = 6400.0
+    tgf_angles = []
 
-    print(angle_two_points(lon1, lat1, r1, lon2, lat2, r2))
-    print(detector_cloud_angle(lon1, lat1, r1, lon2, lat2, r2))
-    # print(angle_two_points(lon1, lat1, r1, lon2, lat2, r2))
+    for j_tgf in range(1, len(data)):
+        tgf_angles.append(detector_cloud_angle(float(data.iloc[j_tgf, 4]), float(data.iloc[j_tgf, 5]), r_detector, float(data.iloc[j_tgf, 7]), float(data.iloc[j_tgf, 8]), r_cloud))
+
+    plt.hist(tgf_angles)
+    plt.xlabel('TGF observation angle, degrees')
+    plt.ylabel('Distribution')
+    plt.show()
 
     # time_difference = datetime.timedelta(microseconds=500)
     #
