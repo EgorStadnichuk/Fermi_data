@@ -111,21 +111,81 @@ def create_datetime_array_for_Fermi(data):
     return datetime_from_data
 
 
-def main():
+def plot_tgf_detection_angle_distribution():
     data = pandas.read_csv('gbm_tgf_catalog_wwlln.csv', index_col=False, header=None)
 
     r_detector = 6378.1 + 565.0  # km
     r_cloud = 6378.1 + 10.0  # km
 
     tgf_angles = []
+    tgf_distances = []
 
     for j_tgf in range(1, len(data)):
         tgf_angles.append(detector_cloud_angle(float(data.iloc[j_tgf, 4]), float(data.iloc[j_tgf, 5]), r_detector, float(data.iloc[j_tgf, 7]), float(data.iloc[j_tgf, 8]), r_cloud))
+        tgf_distances.append(distance_two_points(float(data.iloc[j_tgf, 4]), float(data.iloc[j_tgf, 5]), r_detector, float(data.iloc[j_tgf, 7]), float(data.iloc[j_tgf, 8]), r_cloud))
 
     plt.hist(tgf_angles)
     plt.xlabel('TGF observation angle, degrees')
     plt.ylabel('Distribution')
     plt.show()
+
+
+def main():
+
+    # __________
+    # lon1 = 112.1
+    # lat1 = 0.49
+    # r1 = 6400.0 + 500.0
+    #
+    # lon2 = 11.642
+    # lat2 = 8.2996
+    # r2 = 6400.0 + 500.0
+    #
+    # lon = 111.6418
+    # lat = -8.2996
+    # r = 6400.0 + 10.0
+    #
+    # print(detector_cloud_angle(lon1, lat1, r1, lon, lat, r))
+    # print(detector_cloud_angle(lon2, lat2, r2, lon, lat, r))
+    # __________
+
+    # __________a script to plot tgf angle detection distribution considering detection probability properties
+    data = pandas.read_csv('gbm_tgf_catalog_wwlln.csv', index_col=False, header=None)
+
+    r_detector = 6378.1 + 565.0  # km
+    r_cloud = 6378.1 + 10.0  # km
+
+    tgf_angles = []
+    tgf_distances = []
+
+    for j_tgf in range(1, len(data)):
+        tgf_angles.append(detector_cloud_angle(float(data.iloc[j_tgf, 4]), float(data.iloc[j_tgf, 5]), r_detector, float(data.iloc[j_tgf, 7]), float(data.iloc[j_tgf, 8]), r_cloud))
+        tgf_distances.append(distance_two_points(float(data.iloc[j_tgf, 4]), float(data.iloc[j_tgf, 5]), r_detector, float(data.iloc[j_tgf, 7]), float(data.iloc[j_tgf, 8]), r_cloud))
+
+    # plt.hist(tgf_angles)
+    # plt.xlabel('TGF observation angle, degrees')
+    # plt.ylabel('Distribution')
+    # plt.show()
+
+    angle_histogram = np.histogram(tgf_angles)
+    print(angle_histogram)
+    distribution = np.zeros(len(angle_histogram[1]) - 1)
+    normalization_factor = 0
+    mean_distances = np.zeros(len(angle_histogram[1]) - 1)
+
+    for i in range(len(angle_histogram[1]) - 1):
+        for j in range(len(tgf_angles)):
+            if (tgf_angles[j] >= angle_histogram[1][i]) and (tgf_angles[j] < angle_histogram[1][i + 1]):
+                mean_distances[i] = mean_distances[i] + tgf_distances[j]
+        mean_distances[i] = mean_distances[i] / angle_histogram[0][i]
+        # distribution[i] = angle_histogram[0][i] / np.sin(math.pi / 180 * angle_histogram[1][i + 1])
+        distribution[i] = angle_histogram[0][i] / (np.cos(math.pi / 180 * angle_histogram[1][i]) - np.cos(math.pi / 180 * angle_histogram[1][i + 1])) * (math.pi / 180 * angle_histogram[1][i + 1] - math.pi / 180 * angle_histogram[1][i])
+        normalization_factor = normalization_factor + distribution[i]
+    plt.plot(angle_histogram[1][0: len(angle_histogram[1]) - 1], distribution / normalization_factor)
+    plt.xlabel('TGF observation angle, degrees')
+    plt.ylabel('Distribution')
+    plt.show()
+    # __________
 
     # time_difference = datetime.timedelta(microseconds=500)
     #
